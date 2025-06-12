@@ -18,6 +18,40 @@ import random
 import DR_module
 import os_module
 
+
+def find_drp_file(target_filename="start_proj.drp"):
+    """
+    sys.executable의 하위 폴더를 모두 검색하여 지정된 .drp 파일을 찾는 함수
+
+    Args:
+        target_filename (str): 찾을 파일 이름 (기본값: "start_proj.drp")
+
+    Returns:
+        str: 찾은 파일의 전체 경로. 파일을 찾지 못한 경우 None 반환
+    """
+    # Python 실행 파일 경로 확인
+    sys_root = os.path.dirname(sys.executable)
+    print(f"검색 시작 경로: {sys_root}")
+    print(f"찾으려는 파일 이름 :{target_filename}")
+    # 찾은 파일 경로를 저장할 변수
+    found_file = None
+
+    # 하위 폴더 탐색
+    for root, dirs, files in os.walk(sys_root):
+        if target_filename in files:
+            found_file = os.path.join(root, target_filename)
+            print(f"파일 발견: {found_file}")
+            return found_file
+    # 메시지 박스 표시를 위한 임시 루트 윈도우 생성
+    root = tk.Tk()
+    root.withdraw()  # 루트 윈도우 숨기기
+
+    # 메시지 박스 표시
+    messagebox.showerror("파일 없음", f"'{target_filename}' 같이 들어있는 기본 프로젝트파일을 찾을 수 없습니다. 배포한 그대로 사용하세요")
+
+    # 프로그램 종료
+    sys.exit(1)
+
 class DaVinciResolveApp:
     def __init__(self, root):
         def find_drp_file(target_filename="start_proj.drp"):
@@ -33,7 +67,7 @@ class DaVinciResolveApp:
             # Python 실행 파일 경로 확인
             sys_root = os.path.dirname(sys.executable)
             print(f"검색 시작 경로: {sys_root}")
-
+            print(f"찾으려는 파일 이름 :{target_filename}")
             # 찾은 파일 경로를 저장할 변수
             found_file = None
 
@@ -59,7 +93,7 @@ class DaVinciResolveApp:
 
         self.root = root
         self.root.title("DaVinci Resolve 작업 자동화")
-        self.root.geometry("600x400")
+        self.root.geometry("600x500")
         self.root.resizable(True, True)
 
         # 변수 선언
@@ -68,8 +102,9 @@ class DaVinciResolveApp:
         self.input_folder = tk.StringVar()
         self.output_folder = tk.StringVar()
         self.project_path = tk.StringVar()
-        self.project_path = find_drp_file(target_filename="start_proj.drp")
+        self.project_path = find_drp_file() #초기 프리셋탐색용으로 있어야 함
         self.resolve_path = tk.StringVar()  # 다빈치 리졸브 경로 추가
+
 
         self.able_to_start = None
         self.processing = False
@@ -80,8 +115,6 @@ class DaVinciResolveApp:
 
         # UI 구성
         self.create_widgets()
-
-
 
     def create_widgets(self):
         # 메인 프레임
@@ -119,34 +152,39 @@ class DaVinciResolveApp:
         self.preset_combobox.grid(row=4, column=1, sticky=(tk.W, tk.E), padx=5, pady=5)
         self.preset_combobox.current(0)  # 기본값으로 첫 번째 항목 선택
 
-        # # DaVinci Resolve 경로
-        # ttk.Label(main_frame, text="DaVinci Resolve 경로:").grid(row=0, column=0, sticky=tk.W, pady=5)
-        # ttk.Entry(main_frame, textvariable=self.resolve_path).grid(row=0, column=1, sticky=(tk.W, tk.E), padx=5, pady=5)
-        # ttk.Button(main_frame, text="찾기", command=self.browse_resolve_path).grid(row=0, column=2, pady=5)
-        #
-        #
-        # # 입력 폴더
-        # ttk.Label(main_frame, text="입력 폴더:").grid(row=2, column=0, sticky=tk.W, pady=5)
-        # ttk.Entry(main_frame, textvariable=self.input_folder).grid(row=2, column=1, sticky=(tk.W, tk.E), padx=5, pady=5)
-        # ttk.Button(main_frame, text="찾기", command=self.browse_input_folder).grid(row=2, column=2, pady=5)
-        #
-        # # 출력 폴더
-        # ttk.Label(main_frame, text="출력 폴더:").grid(row=3, column=0, sticky=tk.W, pady=5)
-        # ttk.Entry(main_frame, textvariable=self.output_folder).grid(row=3, column=1, sticky=(tk.W, tk.E), padx=5,
-        #                                                             pady=5)
-        # ttk.Button(main_frame, text="찾기", command=self.browse_output_folder).grid(row=3, column=2, pady=5)
-        #
-        # # 프리셋 XML 파일 선택 (드롭다운 리스트로 변경)
-        # ttk.Label(main_frame, text="프리셋 선택:").grid(row=4, column=0, sticky=tk.W, pady=5)
-        # preset_options = ["다빈치 경로 지정 후 생성"]  # 선택 가능한 옵션들
-        # self.default_preset_option = preset_options[0]
-        # self.preset_combobox = ttk.Combobox(main_frame, textvariable=self.preset, values=preset_options)
-        # self.preset_combobox.grid(row=4, column=1, sticky=(tk.W, tk.E), padx=5, pady=5)
-        # self.preset_combobox.current(0)  # 기본값으로 첫 번째 항목 선택
+        # UHD/HD 선택 버튼 추가 (프리셋 선택 아래에 배치)
+        ttk.Label(main_frame, text="출력 해상도(Resoultion):").grid(row=5, column=0, sticky=tk.W, pady=5)  # 출력 해상도 레이블 추가
+        resolution_frame = ttk.Frame(main_frame)
+        resolution_frame.grid(row=5, column=0, columnspan=3, pady=10)
+
+        self.resolution_var = tk.StringVar(value="HD")  # 기본값 설정
+
+        self.resolution_button = ttk.Radiobutton(resolution_frame, text="HD", variable=self.resolution_var, value="HD")
+        self.resolution_button.pack(side=tk.LEFT, padx=5)
+        self.resolution_button = ttk.Radiobutton(resolution_frame, text="UHD", variable=self.resolution_var, value="UHD")
+        self.resolution_button.pack(side=tk.LEFT, padx=5)
+
+        # UHD/HD 선택 버튼 추가 (프리셋 선택 아래에 배치)
+        ttk.Label(main_frame, text="출력 프레임레이트(FPS):").grid(row=6, column=0, sticky=tk.W, pady=5)  # 출력 해상도 레이블 추가
+        fps_frame = ttk.Frame(main_frame)
+        fps_frame.grid(row=6, column=0, columnspan=3, pady=10)
+
+        self.fps_var = tk.StringVar(value="29.97")  # 기본값 설정
+        self.fps_button = ttk.Radiobutton(fps_frame, text="24", variable=self.fps_var, value="24")
+        self.fps_button.pack(side=tk.LEFT, padx=5)
+        self.fps_button = ttk.Radiobutton(fps_frame, text="29.97", variable=self.fps_var, value="29.97")
+        self.fps_button.pack(side=tk.LEFT, padx=5)
+        self.fps_button = ttk.Radiobutton(fps_frame, text="30", variable=self.fps_var, value="30")
+        self.fps_button.pack(side=tk.LEFT, padx=5)
+        self.fps_button = ttk.Radiobutton(fps_frame, text="59.94", variable=self.fps_var, value="59.94")
+        self.fps_button.pack(side=tk.LEFT, padx=5)
+        self.fps_button = ttk.Radiobutton(fps_frame, text="60", variable=self.fps_var, value="60")
+        self.fps_button.pack(side=tk.LEFT, padx=5)
+
 
         # 상태 표시 프레임
         status_frame = ttk.LabelFrame(main_frame, text="작업 상태")
-        status_frame.grid(row=5, column=0, columnspan=3, sticky=(tk.W, tk.E), padx=5, pady=10)
+        status_frame.grid(row=7, column=0, columnspan=3, sticky=(tk.W, tk.E), padx=5, pady=10)
         status_frame.columnconfigure(0, weight=1)
 
         # 진행 상태 바
@@ -159,10 +197,10 @@ class DaVinciResolveApp:
         self.status_label.grid(row=1, column=0, sticky=tk.W, padx=5, pady=5)
 
         # 로그 출력 영역
-        ttk.Label(main_frame, text="작업 로그:").grid(row=6, column=0, sticky=tk.W, pady=2)
+        ttk.Label(main_frame, text="작업 로그:").grid(row=8, column=0, sticky=tk.W, pady=2)
 
         log_frame = ttk.Frame(main_frame)
-        log_frame.grid(row=7, column=0, columnspan=3, sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
+        log_frame.grid(row=9, column=0, columnspan=3, sticky=(tk.W, tk.E, tk.N, tk.S), pady=5)
         log_frame.rowconfigure(0, weight=1)
         log_frame.columnconfigure(0, weight=1)
 
@@ -178,21 +216,13 @@ class DaVinciResolveApp:
 
         # 시작/중지 버튼 프레임
         button_frame = ttk.Frame(main_frame)
-        button_frame.grid(row=8, column=0, columnspan=3, sticky=tk.E, pady=10)
+        button_frame.grid(row=10, column=0, columnspan=3, sticky=tk.E, pady=10)
 
         self.start_button = ttk.Button(button_frame, text="작업 시작", command=self.start_processing)
         self.start_button.pack(side=tk.RIGHT, padx=5)
 
         self.stop_button = ttk.Button(button_frame, text="작업 중지", command=self.stop_processing, state=tk.DISABLED)
         self.stop_button.pack(side=tk.RIGHT, padx=5)
-
-        # 전체적인 리사이징 설정
-        for i in range(9):
-            main_frame.rowconfigure(i, weight=1 if i == 7 else 0)
-
-        # 패딩 설정
-        for child in main_frame.winfo_children():
-            child.grid_configure(padx=5, pady=2)
 
     def browse_resolve_path(self):
         """DaVinci Resolve 실행 파일 찾기"""
@@ -393,6 +423,17 @@ class DaVinciResolveApp:
             return
 
 
+        ## 여기 dpr 선택하는 창
+        resolution = str(self.resolution_var.get())
+        print(f"해상도는 {resolution}")
+        fps = str(self.fps_var.get())
+        print(f"fps는 {fps}")
+
+        drp_file_name = f"{resolution}({fps}).drp"
+        drp_file_name = str(drp_file_name)
+        self.project_path = find_drp_file(target_filename=drp_file_name)
+        ###수정이 필요할 수 도있음
+
         """작업 시작"""
         if self.processing:
             return
@@ -408,6 +449,8 @@ class DaVinciResolveApp:
         self.input_button.config(state=tk.DISABLED)
         self.output_button.config(state=tk.DISABLED)
         self.start_button.config(state=tk.DISABLED)
+        self.resolution_button.config(state=tk.DISABLED)
+        self.fps_button.config(state=tk.DISABLED)
 
 
         self.progress.start(10)
@@ -486,9 +529,17 @@ class DaVinciResolveApp:
                 output_folder = os.path.normpath(output_folder)
                 preset = str(self.preset.get())
 
+                resolution = str(self.resolution_var.get())
+                print(f"해상도는 {resolution}")
+                fps = str(self.fps_var.get())
+                print(f"fps는 {fps}")
+
+                ## project_path를 해상도와 fps에 맞는 걸로 변경해줘야함..
+
+
+
                 # 현재 머신의 IP 주소 가져오기
                 ip = socket.gethostbyname(socket.gethostname())
-
                 # temp+ip 폴더 경로 생성
                 temp_folder_name = f"temp_{ip}"
                 temp_folder_path = os.path.join(input_folder, temp_folder_name)
@@ -524,12 +575,19 @@ class DaVinciResolveApp:
                         time.sleep(3)
                         file_name =add_timestamp_to_filename(file)
                         file_name = os.path.basename(file_name)
-                        DR_module.render_with_preset(file_name,result_output_folder,str(preset))
+                        result =DR_module.render_with_preset(file_name,result_output_folder,str(preset))
                         time.sleep(2)
-                        os_module.move_contents_to_parent(result_output_folder)
-                        time.sleep(2)
-                        os_module.move_finish_file(file)
-                        ## os.remove(file) 추후에는 remove나 move 필요할 듯
+                        if result == False:
+                            try:
+                                shutil.rmtree(result_output_folder)
+                                os_module.move_contents_to_parent(file)
+                            except:
+                                pass
+                        else:
+                            os_module.move_contents_to_parent(result_output_folder)
+                            time.sleep(2)
+                            os_module.move_finish_file(file)
+                            ## os.remove(file) 추후에는 remove나 move 필요할 듯
 
             except Exception as e:
                 # 오류 발생 시 처리
